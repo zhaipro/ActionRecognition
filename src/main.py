@@ -58,27 +58,20 @@ def _load_data(data):
     return (x, y, w), (x_test, y_test, w_test)
 
 
-'''
-# m = build_model(x, y)
-m = models.load_model('first.h5')
-y_test_pred = m.predict(x_test)
-y_test_pred.shape = -1, y.max() + 1
-y_test_pred_p = y_test_pred.max(1)
-y_test_pred = y_test_pred.argmax(1)
-y_test.shape = -1
-w_test.shape = -1
-'''
+def evaluate():
+    data = np.load('actions.npz')
+    _, (x_test, y_test, w_test) = _load_data(data)
+    m = models.load_model('model.1566964020.h5')
+    m.compile(optimizer='rmsprop',
+              loss='sparse_categorical_crossentropy',
+              sample_weight_mode='temporal')
+    r = m.evaluate(x_test, y_test, sample_weight=w_test)
+    print(r)
 
-'''
-x_test.shape = -1, 6, 2
-for y_true, y_pred, w, p, x in zip(y_test, y_test_pred, w_test, y_test_pred_p, x_test):
-    if w >= 0:
-        print(l[y_true], l[y_pred], w, p)
-        print(x)
-exit()
-'''
 
 if __name__ == '__main__':
+    evaluate()
+    exit()
     data = np.load('actions.npz')
     (x, y, w), (x_test, y_test, w_test) = _load_data(data)
     m = build_model(x, y)
