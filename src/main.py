@@ -1,8 +1,8 @@
+import time
+
 import numpy as np
 import tcn
 from keras import models
-from keras import optimizers
-from keras.callbacks import ReduceLROnPlateau
 from keras.layers import Dense, Activation
 
 
@@ -39,34 +39,52 @@ def build_model(x, y):
     return m
 
 
-data = np.load('actions.npz')
-l = data['labels']
-x, y, w = preproccess(data['keypoints'], data['actions'])
-print(x.shape, y.shape, w.shape)
-n = int(x.shape[0] * 0.9)
-x_test = x[n:]
-y_test = y[n:]
-w_test = w[n:]
-x = x[:n]
-y = y[:n]
-w = w[:n]
-x.shape = 1, -1, 12
-y.shape = 1, -1, 1
-w.shape = 1, -1
-x_test.shape = 1, -1, 12
-y_test.shape = 1, -1, 1
-w_test.shape = 1, -1
+def _load_data(data):
+    x, y, w = preproccess(data['keypoints'], data['actions'])
+    print('data.shape:', x.shape, y.shape, w.shape)
+    n = int(x.shape[0] * 0.9)
+    x_test = x[n:]
+    y_test = y[n:]
+    w_test = w[n:]
+    x = x[:n]
+    y = y[:n]
+    w = w[:n]
+    x.shape = 1, -1, 12
+    y.shape = 1, -1, 1
+    w.shape = 1, -1
+    x_test.shape = 1, -1, 12
+    y_test.shape = 1, -1, 1
+    w_test.shape = 1, -1
+    return (x, y, w), (x_test, y_test, w_test)
 
-m = build_model(x, y)
-# m = models.load_model('first.h5')
-# 当标准评估停止提升时，降低学习速率
-reduce_lr = ReduceLROnPlateau(verbose=1)
-opt = optimizers.RMSprop(lr=0.002, clipnorm=1.)
-m.compile(optimizer=opt,
-          loss='sparse_categorical_crossentropy',
-          sample_weight_mode='temporal')
-m.fit(x, y, sample_weight=w, epochs=1600,
-      validation_data=(x_test, y_test, w_test),)
-      # callbacks=[reduce_lr])
-m.save('first.h5', include_optimizer=False)
-# m.save('first.h5')
+
+'''
+# m = build_model(x, y)
+m = models.load_model('first.h5')
+y_test_pred = m.predict(x_test)
+y_test_pred.shape = -1, y.max() + 1
+y_test_pred_p = y_test_pred.max(1)
+y_test_pred = y_test_pred.argmax(1)
+y_test.shape = -1
+w_test.shape = -1
+'''
+
+'''
+x_test.shape = -1, 6, 2
+for y_true, y_pred, w, p, x in zip(y_test, y_test_pred, w_test, y_test_pred_p, x_test):
+    if w >= 0:
+        print(l[y_true], l[y_pred], w, p)
+        print(x)
+exit()
+'''
+
+if __name__ == '__main__':
+    data = np.load('actions.npz')
+    (x, y, w), (x_test, y_test, w_test) = _load_data(data)
+    m = build_model(x, y)
+    m.compile(optimizer='rmsprop',
+              loss='sparse_categorical_crossentropy',
+              sample_weight_mode='temporal')
+    m.fit(x, y, sample_weight=w, epochs=1600,
+          validation_data=(x_test, y_test, w_test))
+    m.save(f'model.{int(time.time())}.h5', include_optimizer=False)
