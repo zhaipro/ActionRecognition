@@ -1,0 +1,5 @@
+keras-tcn>=1.17.0
+keras>=2.2.4
+numpy>=1.17.0
+opencv-python
+# tensorflow
