@@ -8,6 +8,18 @@ from keras.utils import Sequence
 import tcn
 
 
+def _preproccess(actions, labels):
+    needed = ['开始', '暂停', '放下', '向右', '向左', '上翻_标准', '下翻_标准']
+    results = []
+    for action in actions:
+        for i, label in enumerate(needed):
+            if label in labels[action[2]]:
+                action[2] = i
+                results.append(action)
+                break
+    return np.array(results), needed
+
+
 def preproccess(keypoints, actions):
     # 动作的结束点减起始点，从而获取每一个动作的长度
     lenght = actions[..., 1] - actions[..., 0]
@@ -66,7 +78,7 @@ class Generator(Sequence):
 
 def build_model(x, y):
     i = models.Input(batch_shape=(None, None, x.shape[2]))
-    o = tcn.TCN(nb_filters=32, dropout_rate=0.15, return_sequences=True)(i)
+    o = tcn.TCN(nb_filters=32, dropout_rate=0.30, return_sequences=True)(i)
     o = Dense(y.max() + 1)(o)
     o = Activation('softmax')(o)
     m = models.Model(i, o)
@@ -74,7 +86,8 @@ def build_model(x, y):
 
 
 def _load_data(data):
-    x, y, w = preproccess(data['keypoints'], data['actions'])
+    actions, labels = _preproccess(data['actions'], data['labels'])
+    x, y, w = preproccess(data['keypoints'], actions)
     n = int(len(x) * 0.9)
     x_train = x[:n]
     y_train = y[:n]
@@ -112,7 +125,7 @@ if __name__ == '__main__':
               sample_weight_mode='temporal')
 
     train_datagen = Generator(x, y, w)
-    m.fit_generator(train_datagen, epochs=1600,
+    m.fit_generator(train_datagen, epochs=2000,
                     steps_per_epoch=1,
                     validation_data=(x_test, y_test, w_test))
 
