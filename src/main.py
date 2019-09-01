@@ -1,10 +1,11 @@
 import time
 
 import numpy as np
-import tcn
 from keras import models
 from keras.layers import Dense, Activation
 from keras.utils import Sequence
+
+import tcn
 
 
 def preproccess(keypoints, actions):
@@ -101,8 +102,8 @@ def evaluate():
 
 
 if __name__ == '__main__':
-    evaluate()
-    exit()
+    # evaluate()
+    # exit()
     data = np.load('actions.npz')
     (x, y, w), (x_test, y_test, w_test) = _load_data(data)
     m = build_model(x_test, y_test)
