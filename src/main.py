@@ -66,7 +66,7 @@ class Generator(Sequence):
 
 def build_model(x, y):
     i = models.Input(batch_shape=(None, None, x.shape[2]))
-    o = tcn.TCN(dropout_rate=0.15, dilations=[4, 8, 16, 32], return_sequences=True)(i)
+    o = tcn.TCN(nb_filters=32, dropout_rate=0.15, return_sequences=True)(i)
     o = Dense(y.max() + 1)(o)
     o = Activation('softmax')(o)
     m = models.Model(i, o)
