@@ -122,7 +122,8 @@ if __name__ == '__main__':
     m = build_model(x_test, y_test)
     m.compile(optimizer='rmsprop',
               loss='sparse_categorical_crossentropy',
-              sample_weight_mode='temporal')
+              sample_weight_mode='temporal',
+              weighted_metrics=['acc'])
 
     train_datagen = Generator(x, y, w)
     m.fit_generator(train_datagen, epochs=2000,
